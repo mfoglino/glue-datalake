@@ -1,0 +1,45 @@
+import os
+import pytest
+from pyspark.sql import SparkSession
+from awsglue.context import GlueContext
+
+@pytest.fixture(scope="session")
+def spark_session():
+    spark = (
+        SparkSession.builder.appName("PySpark App")
+        .config("spark.sql.debug.maxToStringFields", "100")
+        .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+        .config(
+            "spark.jars.packages",
+            "org.apache.hadoop:hadoop-aws:3.3.1,com.amazonaws:aws-java-sdk-bundle:1.11.375",
+        )
+        .config(
+            "spark.hadoop.fs.s3a.aws.credentials.provider",
+            "com.amazonaws.auth.DefaultAWSCredentialsProviderChain",
+        )
+
+        .config("spark.hadoop.fs.s3a.endpoint", "s3.amazonaws.com")
+        .getOrCreate()
+    )
+    return spark
+
+
+@pytest.fixture(scope="session")
+def glue_context():
+    spark = SparkSession.builder \
+        .appName("Iceberg Schema Evolution Test") \
+        .master("local[*]") \
+        .config("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog") \
+        .config("spark.sql.catalog.glue_catalog.warehouse", "s3://marcos-test-datalake-raw/warehouse") \
+        .config("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog") \
+        .config("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO") \
+        .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
+        .config("spark.sql.defaultCatalog", "glue_catalog") \
+        .config("spark.hadoop.fs.s3a.endpoint", "s3.us-east-1.amazonaws.com") \
+        .config("spark.hadoop.fs.s3a.aws.credentials.provider", "com.amazonaws.auth.profile.ProfileCredentialsProvider") \
+        .config("spark.hadoop.fs.s3a.aws.profile", "caylent-dev-test") \
+        .config("spark.sql.iceberg.write-allow-schema-evolution", "true") \
+        .getOrCreate()
+    sc = spark.sparkContext
+    glue_context = GlueContext(sc)
+    return glue_context

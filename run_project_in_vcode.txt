@@ -1,0 +1,38 @@
+
+WORKSPACE_LOCATION=/Users/marcos.foglino/workspace/learning/glue-datalake
+
+
+
+docker run -it --rm  -v ~/.aws:/home/hadoop/.aws -v $WORKSPACE_LOCATION:/home/hadoop/workspace/ -e AWS_PROFILE=caylent-dev-test -e ENVIRONMENT=dev -e AWS_REGION=us-east-1 -e AWS_DEFAULT_REGION=us-east-1 -p 4040:4040 -p 18080:18080  --name glue5_pyspark public.ecr.aws/glue/aws-glue-libs:5 pyspark
+
+
+Inside the container shell:
+
+PYTHONPATH=$PYTHONPATH:/home/hadoop/workspace
+
+python3 glue_scripts/job_raw_to_stage_incremental.py  --table core_program --timestamp_bookmark_str '2025-01-01 00:00:00.000' --raw_bucket_name marcos-test-datalake-raw --raw_bucket_prefix tables --bookmark_table raw_to_stage_bookmarks  --JOB_NAME rawtest 
+pytest -s tests/test_landing_to_raw.py
+
+ 
+
+
+Visual Code:
+============
+
+In Preferences: Open Workspace Settings (JSON), and put this json:
+
+{
+    "python.defaultInterpreterPath": "/usr/bin/python3.11",
+    "python.analysis.extraPaths": [
+        "/usr/lib/spark/python/lib/py4j-0.10.9.7-src.zip:/usr/lib/spark/python/:/usr/lib/spark/python/lib/",
+    ]
+}
+
+
+
+
+
+Lunes:
+
+- github copilot for bash
+- zeppelin local using docker
