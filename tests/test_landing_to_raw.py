@@ -31,5 +31,3 @@ def test_landing_to_raw_incremental_load(glue_context):
                                           table, timestamp_bookmark_str)
 
     latest_data_df.show()
-
-

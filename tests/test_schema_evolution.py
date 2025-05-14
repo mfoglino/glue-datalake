@@ -55,10 +55,6 @@ def test_generate_initial_schema(glue_context):
     # rename later manually to a single file named LOAD00000001.parquet
 
 
-
-
-
-
 def test_evolve_schema(glue_context):
     spark = glue_context.spark_session
 
