@@ -1,3 +1,5 @@
+import boto3
+
 from data_helper import load_data_from_s3, add_date_information
 
 
@@ -7,5 +9,74 @@ def process_landing_data(lading_bucket_name, landing_bucket_prefix, logger, raw_
     latest_data_df = add_date_information(latest_data_df)
     output_path = f"s3://{raw_bucket_name}/tables/{table}/"
     # Write the DataFrame to the raw bucket in append mode with partitions
+
+
     latest_data_df.write.mode("append").partitionBy("year", "month", "day").parquet(output_path)
     return latest_data_df
+
+
+def do_raw_to_stage(glue_context, spark, table, logger):
+    spark.sql("SHOW TABLES IN raw").show()
+    spark.sql("SELECT current_catalog()").show()
+    spark.sql("SELECT current_schema()").show()
+
+    #df_raw = spark.read.table(f"raw.{table}")
+    #spark.sql(f"SELECT * FROM raw.{table} LIMIT 5").show(truncate=False)
+    #df_raw.show()
+
+    df_raw = glue_context.create_dynamic_frame.from_catalog(
+        database="raw",
+        table_name="people_table",
+        transformation_ctx="raw_people_ctx",
+        additional_options={"useGlueDataCatalog": True, "mergeSchema": True}
+    ).toDF()
+
+    # Check if table exists
+    table_exists = spark.sql(f"SHOW TABLES IN raw LIKE '{table}'").count() > 0
+
+    if table_exists:
+        # For existing tables, use ALTER TABLE to add missing columns first
+        logger.info(f"Table {table} exists. Checking for schema differences.")
+
+        # Get existing table schema
+        # Retrieve table schema using get_columns_metadata
+        columns_metadata = get_columns_metadata("raw", table)
+        table_columns = [column["Name"] for column in columns_metadata]
+        data_columns = df_raw.columns
+
+        # Find missing columns
+        missing_columns = set(data_columns) - set(table_columns)
+
+        # Add missing columns to the table
+        for col in missing_columns:
+            col_type = df_raw.schema[col].dataType.simpleString()
+            logger.info(f"Adding column {col} with type {col_type} to table raw.{table}")
+            spark.sql(f"ALTER TABLE raw.{table} ADD COLUMN {col} {col_type}")
+
+        # Now append data with schema evolution enabled
+        logger.info(f"Appending data to table raw.{table}")
+        df_raw.writeTo(f"raw.{table}") \
+            .tableProperty("format-version", "2") \
+            .append()
+    else:
+        # Create table if it doesn't exist
+        logger.info(f"Table {table} doesn't exist. Creating new table.")
+        df_raw.writeTo(f"raw.{table}") \
+            .tableProperty("format-version", "2") \
+            .partitionedBy("year", "month", "day") \
+            .create()
+
+
+    df_raw.show(truncate=False)
+
+
+def get_columns_metadata(database_name, table_name):
+    glue_client = boto3.client("glue", region_name="us-east-1")
+    # Get the table metadata
+    response = glue_client.get_table(DatabaseName=database_name, Name=table_name)
+    # Extract column metadata
+    columns = response["Table"]["StorageDescriptor"]["Columns"]
+    # Print column metadata
+    for column in columns:
+        print(f"Column Name: {column['Name']}, Type: {column['Type']}, Comment: {column.get('Comment', 'N/A')}")
+    return columns

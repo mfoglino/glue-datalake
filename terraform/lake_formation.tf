@@ -1,7 +1,6 @@
 locals {
-  glue_etl_role = "arn:aws:iam::131578276461:role/service-role/AWSGlueServiceRole-MarcosTest"
   databases = ["raw"]
-  roles = [local.glue_etl_role]
+  roles = [local.glue_etl_role_arn,"arn:aws:iam::131578276461:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_370d0a9b30d49146"]
   databases_with_roles = flatten([
     for role in local.roles : [
       #for database in concat(var.databases_name, ["default"]) : {

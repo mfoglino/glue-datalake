@@ -104,3 +104,6 @@ Pipfile.lock
 venv/
 
 .idea/
+
+# Python egg info
+*.egg-info/

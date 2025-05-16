@@ -10,9 +10,6 @@ TIMESTAMP_COLUMN = "cdc_timestamp"  # Replace with your actual timestamp column 
 def load_data_from_s3(bucket_name, prefix, table, timestamp_bookmark_str, spark, logger):
     logger.info(f"Loading data from {bucket_name}/{prefix}/{table}, since: {timestamp_bookmark_str}")
 
-    # Read and process data for each hour (i.e. all the needed partitions)
-    all_dfs = []
-
     is_initial_load = "INITIAL_LOAD" in timestamp_bookmark_str
 
     if is_initial_load:
@@ -20,7 +17,7 @@ def load_data_from_s3(bucket_name, prefix, table, timestamp_bookmark_str, spark,
         #path_to_initial_data = f"{S3_SCHEME}://{bucket_name}/{prefix}/{table}"
         path_to_initial_data = f"{S3_SCHEME}://{bucket_name}/{prefix}/{table}/LOAD*.parquet"
 
-        #initial_df = spark.read.option("recursiveFileLookup", "true").parquet(path_to_initial_data)
+        # initial_df = spark.read.option("recursiveFileLookup", "true").parquet(path_to_initial_data)
         initial_df = spark.read.parquet(path_to_initial_data)
         return initial_df
     else:
@@ -33,7 +30,7 @@ def load_data_from_s3(bucket_name, prefix, table, timestamp_bookmark_str, spark,
         filtered_files = filter_files_by_timestamp(f"{prefix}/{table}", files, timestamp_bookmark_date_hour)
         input_paths = [f"{S3_SCHEME}://{bucket_name}/{file_path}" for file_path in filtered_files]
 
-        if input_paths or all_dfs:
+        if input_paths:
             new_data_df = spark.read.parquet(*input_paths)
             # Doing Granular filtering by bookmark date
             new_data_df = new_data_df.filter(new_data_df[TIMESTAMP_COLUMN] > timestamp_bookmark_str)
