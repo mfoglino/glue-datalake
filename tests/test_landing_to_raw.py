@@ -50,9 +50,18 @@ def test_describe(glue_context):
     spark.sql("SELECT current_catalog()").show()
     spark.sql("SELECT current_schema()").show()
     spark.sql("USE SCHEMA raw")
-    table_schema = spark.sql(f"DESCRIBE raw.{table_name}").collect()
-    #table_schema = spark.table(f"raw.{table}").schema
-    print(table_schema)
+    #table_schema = spark.sql(f"""DESCRIBE `spark_catalog.raw.{table_name}`""").collect()
+    #print(table_schema)
+
+    #columns = spark.catalog.listColumns(f"{database_name}.{table_name}")
+    print("List of available catalogs:", spark.catalog.listCatalogs())
+    print("Check if 'unexisting_table' exists:", spark.catalog.tableExists("unexisting_table"))
+    print("Check if 'raw.people_table' exists:", spark.catalog.tableExists("raw.people_table"))
+    print("Current catalog in use:", spark.catalog.currentCatalog())
+
+    #print("List of available databases:", spark.catalog.listDatabases())
+    print("List of tables in the current catalog and schema:", spark.catalog.listTables())
+
 
     #columns = get_columns_metadata(database_name, table_name)
 
@@ -75,3 +84,19 @@ def test_describe(glue_context):
 #     do_raw_to_stage(glue_context, spark, table)
 #
 #     latest_data_df.show()
+
+def test_describe_2(glue_context):
+    spark = glue_context.spark_session
+    database_name = "raw"
+    table_name = "people_table"
+
+    print("Spark catalog imp", spark.conf.get("spark.sql.catalogImplementation"))
+
+    print("SHOW TABLES in glue_catalog.raw")
+    spark.sql(f"SHOW TABLES IN glue_catalog.{database_name}").show()
+
+    print("DESCRIBE glue_catalog.raw.people_table")
+    spark.sql(f"DESCRIBE TABLE `glue_catalog.{database_name}.{table_name}`").show()
+
+    print("List of available catalogs (logical):", spark.catalog.listCatalogs())
+    print("Current catalog (default):", spark.catalog.currentCatalog())
