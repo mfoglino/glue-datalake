@@ -40,8 +40,10 @@ def test_step4_landing_to_raw_incremental_load(glue_context):
 
     latest_data_df.show()
 
+def test_step5_run_crawler(glue_context):
+    run_crawler_sync("marcos-raw-test-crawler")
 
-def test_step5_raw_to_stage_new_data(glue_context):
+def test_step6_raw_to_stage_new_data(glue_context):
     spark = glue_context.spark_session
     do_raw_to_stage(glue_context, spark, table, glue_context.get_logger())
 
@@ -91,3 +93,37 @@ def test_describe(glue_context):
 def test_clean_tables_and_data(glue_context):
 
     delete_tables_and_clean_data(glue_context, raw_bucket_name)
+
+
+def test_schema_evolution_end_to_end(glue_context):
+    spark = glue_context.spark_session
+
+    ### STEP 1
+    # timestamp_bookmark_str = "INITIAL_LOAD"
+    # logger = glue_context.get_logger()
+    #
+    # latest_data_df = process_landing_data(lading_bucket_name, landing_bucket_prefix, logger, raw_bucket_name, spark,
+    #                                       table, timestamp_bookmark_str)
+    #
+    # latest_data_df.show()
+    #
+    # ### STEP 2
+    # run_crawler_sync("marcos-raw-test-crawler")
+    #
+    # ### STEP 3
+    # do_raw_to_stage(glue_context, spark, table, glue_context.get_logger())
+    #
+    # ### STEP 4
+    # timestamp_bookmark_str = "2023-01-02 12:03:00.001"
+    # logger = glue_context.get_logger()
+    #
+    # latest_data_df = process_landing_data(lading_bucket_name, landing_bucket_prefix, logger, raw_bucket_name, spark,
+    #                                       table, timestamp_bookmark_str)
+    # latest_data_df.show()
+
+    ### STEP 5
+    run_crawler_sync("marcos-raw-test-crawler")
+
+    ### STEP 6
+    do_raw_to_stage(glue_context, spark, table, glue_context.get_logger())
+
