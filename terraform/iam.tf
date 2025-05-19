@@ -1,6 +1,22 @@
 
 
+# create an IAM role for Glue
+resource "aws_iam_role" "glue_etl_role" {
+  name = "glue_etl_role"
 
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "glue.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
 
 
 # give glue role permissions over marcos-test-datalake-glue-scripts
@@ -26,7 +42,7 @@ resource "aws_iam_policy" "glue_scripts_access" {
 }
 
 resource "aws_iam_role_policy_attachment" "glue_role_policy_attachment" {
-  role       = local.glue_etl_role
+  role       = aws_iam_role.glue_etl_role.name
   policy_arn = aws_iam_policy.glue_scripts_access.arn
 }
 
@@ -51,8 +67,12 @@ resource "aws_iam_policy" "glue_etl_access" {
 }
 
 resource "aws_iam_role_policy_attachment" "glue_etl_role_policy_attachment" {
-  role       = local.glue_etl_role
+  role       = aws_iam_role.glue_etl_role.name
   policy_arn = aws_iam_policy.glue_etl_access.arn
 }
 
 
+resource "aws_iam_role_policy_attachment" "glue_service_role_policy_attachment" {
+  role       = aws_iam_role.glue_etl_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+}

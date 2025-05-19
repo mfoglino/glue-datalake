@@ -6,7 +6,7 @@ resource "aws_s3_bucket" "landing_bucket" {
 }
 
 resource "aws_s3_bucket" "raw_bucket" {
-  bucket = "marcos-test-datalake-raw-unique"
+  bucket = "marcos-test-datalake-raw"
 }
 
 # glue scripts bucket

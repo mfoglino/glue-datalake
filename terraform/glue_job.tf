@@ -25,7 +25,7 @@ resource "aws_s3_object" "glue_job_script" {
 
 resource "aws_glue_job" "this" {
   name     = "marcos-raw-to-stage"
-  role_arn = local.glue_etl_role_arn
+  role_arn = aws_iam_role.glue_etl_role.arn
 
   command {
     script_location = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/${aws_s3_object.glue_job_script.key}"
@@ -41,7 +41,7 @@ resource "aws_glue_job" "this" {
     "--enable-observability-metrics"     = "true"
     "--enable-continuous-cloudwatch-log" = "true"
     "--enable-spark-ui"                  = "true"
-    "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
+    #"--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
     "--conf" = trim(local.spark_conf, "\n")
   }
 

@@ -1,14 +1,18 @@
+import boto3
+
 from etl import process_landing_data, do_raw_to_stage, get_columns_metadata
 
+lading_bucket_name = "marcos-test-datalake-landing"
+raw_bucket_name = "marcos-test-datalake-raw-unique"
+landing_bucket_prefix = "tables"
+table = "people_table"
+stage_db = "stage"
+raw_db = "raw"
 
 def test_landing_to_raw_initial_load(glue_context):
 
     spark = glue_context.spark_session
     timestamp_bookmark_str = "INITIAL_LOAD"
-    lading_bucket_name = "marcos-test-datalake-landing"
-    landing_bucket_prefix = "tables"
-    raw_bucket_name = "marcos-test-datalake-raw-unique"
-    table = "people_table"
     logger = glue_context.get_logger()
 
     latest_data_df = process_landing_data(lading_bucket_name, landing_bucket_prefix, logger, raw_bucket_name, spark,
@@ -21,10 +25,6 @@ def test_landing_to_raw_incremental_load(glue_context):
 
     spark = glue_context.spark_session
     timestamp_bookmark_str = "2023-01-02 12:03:00.001"
-    lading_bucket_name = "marcos-test-datalake-landing"
-    landing_bucket_prefix = "tables"
-    raw_bucket_name = "marcos-test-datalake-raw-unique"
-    table = "people_table"
     logger = glue_context.get_logger()
 
     latest_data_df = process_landing_data(lading_bucket_name, landing_bucket_prefix, logger, raw_bucket_name, spark,
@@ -35,25 +35,18 @@ def test_landing_to_raw_incremental_load(glue_context):
 
 def test_raw_to_stage(glue_context):
     spark = glue_context.spark_session
-    table = "people_table"
-
     do_raw_to_stage(glue_context, spark, table, glue_context.get_logger())
 
 
 def test_describe(glue_context):
     spark = glue_context.spark_session
-    database_name = "raw"
-    table_name = "people_table"
-
 
     spark.sql("SHOW TABLES IN raw").show()
     spark.sql("SELECT current_catalog()").show()
     spark.sql("SELECT current_schema()").show()
     spark.sql("USE SCHEMA raw")
-    #table_schema = spark.sql(f"""DESCRIBE `spark_catalog.raw.{table_name}`""").collect()
-    #print(table_schema)
+    spark.sql(f"""DESCRIBE spark_catalog.{raw_db}.{table}""").show()
 
-    #columns = spark.catalog.listColumns(f"{database_name}.{table_name}")
     print("List of available catalogs:", spark.catalog.listCatalogs())
     print("Check if 'unexisting_table' exists:", spark.catalog.tableExists("unexisting_table"))
     print("Check if 'raw.people_table' exists:", spark.catalog.tableExists("raw.people_table"))
@@ -85,18 +78,34 @@ def test_describe(glue_context):
 #
 #     latest_data_df.show()
 
-def test_describe_2(glue_context):
+def test_clean_tables_and_data(glue_context):
+
+    delete_tables_and_clean_data(glue_context, raw_bucket_name)
+
+
+
+def delete_tables_and_clean_data(glue_context, raw_bucket_name):
     spark = glue_context.spark_session
-    database_name = "raw"
-    table_name = "people_table"
+    s3_client = boto3.client("s3")
 
-    print("Spark catalog imp", spark.conf.get("spark.sql.catalogImplementation"))
+    # Delete tables in raw and stage databases
+    for database in ["raw", "stage"]:
+        tables = spark.sql(f"SHOW TABLES IN {database}").collect()
+        for table in tables:
+            table_name = table["tableName"]
+            print(f"Dropping table: {database}.{table_name}")
+            spark.sql(f"DROP TABLE {database}.{table_name}")
 
-    print("SHOW TABLES in glue_catalog.raw")
-    spark.sql(f"SHOW TABLES IN glue_catalog.{database_name}").show()
+    # Clean raw bucket
+    print(f"Cleaning bucket: {raw_bucket_name}")
+    clean_s3_bucket(s3_client, raw_bucket_name)
 
-    print("DESCRIBE glue_catalog.raw.people_table")
-    spark.sql(f"DESCRIBE TABLE `glue_catalog.{database_name}.{table_name}`").show()
 
-    print("List of available catalogs (logical):", spark.catalog.listCatalogs())
-    print("Current catalog (default):", spark.catalog.currentCatalog())
+
+def clean_s3_bucket(s3_client, bucket_name):
+    prefix = "tables/"  # Specify the folder prefix
+    paginator = s3_client.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
+        if "Contents" in page:
+            objects = [{"Key": obj["Key"]} for obj in page["Contents"]]
+            s3_client.delete_objects(Bucket=bucket_name, Delete={"Objects": objects})
