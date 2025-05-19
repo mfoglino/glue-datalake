@@ -1,7 +1,8 @@
-import os
 import pytest
 from pyspark.sql import SparkSession
 from awsglue.context import GlueContext
+
+raw_bucket_name = "marcos-test-datalake-raw"
 
 @pytest.fixture(scope="session")
 def spark_session():
@@ -30,7 +31,7 @@ def glue_context():
         .appName("Iceberg Schema Evolution Test") \
         .master("local[*]") \
         .config("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog") \
-        .config("spark.sql.catalog.glue_catalog.warehouse", "s3://marcos-test-datalake-raw-unique/warehouse") \
+        .config(f"spark.sql.catalog.glue_catalog.warehouse", f"s3://{raw_bucket_name}/warehouse") \
         .config("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog") \
         .config("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO") \
         .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \

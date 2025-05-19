@@ -24,10 +24,6 @@ def do_raw_to_stage(glue_context, spark, table, logger):
 
     target_database = "stage"
 
-    #df_raw = spark.read.table(f"raw.{table}")
-    #spark.sql(f"SELECT * FROM raw.{table} LIMIT 5").show(truncate=False)
-    #df_raw.show()
-
     df_raw = glue_context.create_dynamic_frame.from_catalog(
         database="raw",
         table_name="people_table",
@@ -36,9 +32,8 @@ def do_raw_to_stage(glue_context, spark, table, logger):
     ).toDF()
 
     # Check if table exists
-    table_exists = table_exists_in_glue_context(glue_context, target_database, table)
+    if table_exists_in_glue_catalog(glue_context, target_database, table):
 
-    if table_exists:
         # For existing tables, use ALTER TABLE to add missing columns first
         logger.info(f"Table {table} exists. Checking for schema differences.")
 
@@ -51,7 +46,6 @@ def do_raw_to_stage(glue_context, spark, table, logger):
         # Find missing columns
         missing_columns = set(data_columns) - set(stage_table_columns + ["year", "month", "day"])
 
-
         print(f"Missing columns: {missing_columns}")
 
         # Add missing columns to the table
@@ -62,7 +56,7 @@ def do_raw_to_stage(glue_context, spark, table, logger):
             spark.sql(f"ALTER TABLE {target_database}.{table} ADD COLUMN {col} {col_type}")
 
         # Now append data with schema evolution enabled
-        logger.info(f"Appending data to table {table_exists_in_glue_context}.{table}")
+        logger.info(f"Appending data to table {table_exists_in_glue_catalog}.{table}")
         df_raw.writeTo(f"{target_database}.{table}") \
             .tableProperty("format-version", "2") \
             .append()
@@ -90,19 +84,14 @@ def get_columns_metadata(database_name, table_name):
         print(f"Column Name: {column['Name']}, Type: {column['Type']}, Comment: {column.get('Comment', 'N/A')}")
     return columns
 
-def table_exists_in_glue_context(glue_context, database_name, table_name):
+def table_exists_in_glue_catalog(spark, database_name, table_name):
     try:
-        dynamic_frame = glue_context.create_dynamic_frame.from_catalog(
-            database=database_name,
-            table_name=table_name,
-            transformation_ctx="check_table_exists"
-        )
-        return dynamic_frame.count() > 0
+        # Use spark.sql to check if the table exists in the database
+        result = spark.sql(f"SHOW TABLES IN {database_name}").filter(f"tableName = '{table_name}'").count()
+        return result > 0
     except Exception as e:
-        if "EntityNotFoundException" in str(e):
-            return False
-        else:
-            raise
+        print(f"Error checking table existence: {e}")
+        return False
 
 
 def run_crawler_sync(crawler_name):
