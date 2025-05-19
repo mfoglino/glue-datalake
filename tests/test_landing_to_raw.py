@@ -1,15 +1,15 @@
-import boto3
+from etl import process_landing_data, do_raw_to_stage, run_crawler_sync
 
-from etl import process_landing_data, do_raw_to_stage, get_columns_metadata
+from tests.test_helper import delete_tables_and_clean_data
 
 lading_bucket_name = "marcos-test-datalake-landing"
-raw_bucket_name = "marcos-test-datalake-raw-unique"
+raw_bucket_name = "marcos-test-datalake-raw"
 landing_bucket_prefix = "tables"
 table = "people_table"
 stage_db = "stage"
 raw_db = "raw"
 
-def test_landing_to_raw_initial_load(glue_context):
+def test_step1_landing_to_raw_initial_load(glue_context):
 
     spark = glue_context.spark_session
     timestamp_bookmark_str = "INITIAL_LOAD"
@@ -20,8 +20,16 @@ def test_landing_to_raw_initial_load(glue_context):
 
     latest_data_df.show()
 
+def test_step2_run_crawler():
+    # This test should be run manually to trigger the crawler
+    # to create the tables in the raw database
+    run_crawler_sync("marcos-raw-test-crawler")
 
-def test_landing_to_raw_incremental_load(glue_context):
+def test_step3_raw_to_stage(glue_context):
+    spark = glue_context.spark_session
+    do_raw_to_stage(glue_context, spark, table, glue_context.get_logger())
+
+def test_step4_landing_to_raw_incremental_load(glue_context):
 
     spark = glue_context.spark_session
     timestamp_bookmark_str = "2023-01-02 12:03:00.001"
@@ -33,9 +41,7 @@ def test_landing_to_raw_incremental_load(glue_context):
     latest_data_df.show()
 
 
-def test_raw_to_stage(glue_context):
-    spark = glue_context.spark_session
-    do_raw_to_stage(glue_context, spark, table, glue_context.get_logger())
+
 
 
 def test_describe(glue_context):
@@ -81,31 +87,3 @@ def test_describe(glue_context):
 def test_clean_tables_and_data(glue_context):
 
     delete_tables_and_clean_data(glue_context, raw_bucket_name)
-
-
-
-def delete_tables_and_clean_data(glue_context, raw_bucket_name):
-    spark = glue_context.spark_session
-    s3_client = boto3.client("s3")
-
-    # Delete tables in raw and stage databases
-    for database in ["raw", "stage"]:
-        tables = spark.sql(f"SHOW TABLES IN {database}").collect()
-        for table in tables:
-            table_name = table["tableName"]
-            print(f"Dropping table: {database}.{table_name}")
-            spark.sql(f"DROP TABLE {database}.{table_name}")
-
-    # Clean raw bucket
-    print(f"Cleaning bucket: {raw_bucket_name}")
-    clean_s3_bucket(s3_client, raw_bucket_name)
-
-
-
-def clean_s3_bucket(s3_client, bucket_name):
-    prefix = "tables/"  # Specify the folder prefix
-    paginator = s3_client.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
-        if "Contents" in page:
-            objects = [{"Key": obj["Key"]} for obj in page["Contents"]]
-            s3_client.delete_objects(Bucket=bucket_name, Delete={"Objects": objects})

@@ -1,3 +1,5 @@
+import time
+
 import boto3
 
 from data_helper import load_data_from_s3, add_date_information
@@ -101,3 +103,24 @@ def table_exists_in_glue_context(glue_context, database_name, table_name):
             return False
         else:
             raise
+
+
+def run_crawler_sync(crawler_name):
+    glue_client = boto3.client("glue")
+
+    # Start the crawler
+    print(f"Starting crawler: {crawler_name}")
+    glue_client.start_crawler(Name=crawler_name)
+
+    # Poll the crawler status
+    while True:
+        response = glue_client.get_crawler(Name=crawler_name)
+        status = response["Crawler"]["State"]
+        print(f"Crawler status: {status}")
+
+        if status != "RUNNING":
+            break
+
+        time.sleep(5)  # Wait before checking again
+
+    print(f"Crawler {crawler_name} has completed.")

@@ -1,10 +1,10 @@
 resource "aws_glue_crawler" "marcos_raw_test_crawler" {
   name         = "marcos-raw-test-crawler"
-  role         = "service-role/AWSGlueServiceRole-MarcosTest"
+  role         = aws_iam_role.glue_etl_role.name
   database_name = "raw"
 
   s3_target {
-    path = "s3://marcos-test-datalake-raw-unique/tables"
+    path = "s3://${aws_s3_bucket.raw_bucket.id}/tables"
   }
 
   recrawl_policy {
