@@ -41,11 +41,15 @@ def test_step4_landing_to_raw_incremental_load(glue_context):
     latest_data_df.show()
 
 
-
+def test_step5_raw_to_stage_new_data(glue_context):
+    spark = glue_context.spark_session
+    do_raw_to_stage(glue_context, spark, table, glue_context.get_logger())
 
 
 def test_describe(glue_context):
     spark = glue_context.spark_session
+    logger = glue_context.get_logger()
+    logger.info("Testing describe function")
 
     spark.sql("SHOW TABLES IN raw").show()
     spark.sql("SELECT current_catalog()").show()

@@ -45,6 +45,7 @@ def glue_context():
         .config("spark.sql.parquet.mergeSchema", "true") \
         .getOrCreate()
     sc = spark.sparkContext
+    sc.setLogLevel("INFO")
     glue_context = GlueContext(sc)
     return glue_context
 
