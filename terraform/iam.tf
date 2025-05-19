@@ -17,7 +17,8 @@ resource "aws_iam_policy" "glue_scripts_access" {
           "s3:ListBucket"
         ]
         Resource = [
-          "arn:aws:s3:::${aws_s3_bucket.glue_scripts_bucket.id}*"
+          "arn:aws:s3:::${aws_s3_bucket.glue_scripts_bucket.id}*",
+          "arn:aws:s3:::${aws_s3_bucket.raw_bucket.id}*"
         ]
       }
     ]

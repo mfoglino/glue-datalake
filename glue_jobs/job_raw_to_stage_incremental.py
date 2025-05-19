@@ -32,9 +32,11 @@ spark.sql("SHOW TABLES IN raw").show()
 spark.sql("SELECT current_catalog()").show()
 spark.sql("SELECT current_schema()").show()
 spark.sql("USE SCHEMA raw")
-table_schema = spark.sql(f"DESCRIBE raw.{table_name}").collect()
+logger.info(f"Spark catalog imp {spark.conf.get('spark.sql.catalogImplementation')}")
+
+spark.sql(f"DESCRIBE stage.{table_name}").show()
 #table_schema = spark.table(f"raw.{table}").schema
-print(table_schema)
+#print(table_schema)
 
 
 job.commit()
