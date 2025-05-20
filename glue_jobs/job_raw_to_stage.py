@@ -6,12 +6,14 @@ from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark import SparkContext
 
+from etl.etl import process_landing_data, do_raw_to_stage
 
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(
     sys.argv,
     [
         "JOB_NAME",
+        "timestamp_bookmark_str",
     ],
 )
 
@@ -25,18 +27,13 @@ logger = glueContext.get_logger()
 
 
 database_name = "raw"
-table_name = "people_table"
+table = "people_table"
+timestamp_bookmark_str = args["timestamp_bookmark_str"]
+landing_bucket_name = "marcos-test-datalake-landing"
+landing_bucket_prefix = "tables"
+raw_bucket_name = "marcos-test-datalake-raw"
 
-logger.info(f"Showing metadata...")
-spark.sql("SHOW TABLES IN raw").show()
-spark.sql("SELECT current_catalog()").show()
-spark.sql("SELECT current_schema()").show()
-spark.sql("USE SCHEMA raw")
-logger.info(f"Spark catalog imp {spark.conf.get('spark.sql.catalogImplementation')}")
-
-spark.sql(f"DESCRIBE stage.{table_name}").show()
-#table_schema = spark.table(f"raw.{table}").schema
-#print(table_schema)
+do_raw_to_stage(glueContext, spark, table, glueContext.get_logger())
 
 
 job.commit()

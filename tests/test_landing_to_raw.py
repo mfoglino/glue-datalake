@@ -1,4 +1,4 @@
-from etl import process_landing_data, do_raw_to_stage, run_crawler_sync
+from etl.etl import process_landing_data, do_raw_to_stage, run_crawler_sync
 
 from tests.test_helper import delete_tables_and_clean_data
 

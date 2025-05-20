@@ -9,7 +9,6 @@ setup(
     packages=find_packages(),  # Automatically finds all packages in this directory
     install_requires=[],  # Add dependencies if needed
     package_data={
-        #"": ["sql/queries/*.sql"],
     },
     include_package_data=True,
     python_requires=">=3.10",

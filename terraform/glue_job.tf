@@ -1,6 +1,7 @@
 locals {
   enable_time_legacy_parser = false
-  script_name               = "job_raw_to_stage_incremental.py"
+  raw_job_name               = "job_landing_to_raw.py"
+  stage_job_name            = "job_raw_to_stage.py"
 
   spark_conf = <<EOT
  conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
@@ -14,21 +15,28 @@ ${local.enable_time_legacy_parser ? " --conf spark.sql.legacy.timeParserPolicy=L
 EOT
 }
 
-
-
-resource "aws_s3_object" "glue_job_script" {
+resource "aws_s3_object" "raw_glue_job_script" {
   bucket = aws_s3_bucket.glue_scripts_bucket.id
-  key    = "glue_jobs/${local.script_name}"
-  source = "../glue_jobs/${local.script_name}"
-  etag = filemd5("../glue_jobs/${local.script_name}")
+  key    = "glue_jobs/${local.raw_job_name}"
+  source = "../glue_jobs/${local.raw_job_name}"
+  etag = filemd5("../glue_jobs/${local.raw_job_name}")
 }
 
-resource "aws_glue_job" "this" {
-  name     = "marcos-raw-to-stage"
+
+resource "aws_s3_object" "stage_glue_job_script" {
+  bucket = aws_s3_bucket.glue_scripts_bucket.id
+  key    = "glue_jobs/${local.stage_job_name}"
+  source = "../glue_jobs/${local.stage_job_name}"
+  etag = filemd5("../glue_jobs/${local.stage_job_name}")
+}
+
+
+resource "aws_glue_job" "raw_job" {
+  name     = "marcos-landing-to-raw"
   role_arn = aws_iam_role.glue_etl_role.arn
 
   command {
-    script_location = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/${aws_s3_object.glue_job_script.key}"
+    script_location = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/${aws_s3_object.raw_glue_job_script.key}"
     python_version  = "3"
   }
 
@@ -41,8 +49,44 @@ resource "aws_glue_job" "this" {
     "--enable-observability-metrics"     = "true"
     "--enable-continuous-cloudwatch-log" = "true"
     "--enable-spark-ui"                  = "true"
-    #"--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
+    "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
+
+
     "--conf" = trim(local.spark_conf, "\n")
+  }
+
+  glue_version      = "5.0"
+  worker_type       = "G.1X"
+  number_of_workers = "2"
+
+  execution_property {
+    max_concurrent_runs = 5
+  }
+}
+
+
+
+resource "aws_glue_job" "stage_job" {
+  name     = "marcos-raw-to-stage"
+  role_arn = aws_iam_role.glue_etl_role.arn
+
+  command {
+    script_location = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/${aws_s3_object.stage_glue_job_script.key}"
+    python_version  = "3"
+  }
+
+  default_arguments = {
+    "--job-language"                     = "python"
+    "--job-bookmark-option"              = "job-bookmark-enable"
+    "--enable-glue-datacatalog"          = "true"
+    "--enable-metrics"                   = "true"
+    "--enable-job-insights"              = "true"
+    "--enable-observability-metrics"     = "true"
+    "--enable-continuous-cloudwatch-log" = "true"
+    "--enable-spark-ui"                  = "true"
+    "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
+    "--conf" = trim(local.spark_conf, "\n")
+    "--timestamp_bookmark_str" = "-"
   }
 
   glue_version      = "5.0"

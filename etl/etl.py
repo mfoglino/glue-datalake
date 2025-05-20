@@ -2,7 +2,8 @@ import time
 
 import boto3
 
-from data_helper import load_data_from_s3, add_date_information
+from etl.data_helper import load_data_from_s3, add_date_information
+
 
 
 def process_landing_data(lading_bucket_name, landing_bucket_prefix, logger, raw_bucket_name, spark, table, timestamp_bookmark_str):
