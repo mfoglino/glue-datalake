@@ -8,6 +8,7 @@ class DataHelper:
         self.s3_conn = boto3.session.Session().client("s3")
         self.TIMESTAMP_COLUMN = "cdc_timestamp"  # Replace with your actual timestamp column name
         self.glue_context = glue_context
+        self.spark = glue_context.spark_session
         self.logger = glue_context.get_logger()
 
     def load_data_from_s3(self, bucket_name, prefix, table, timestamp_bookmark_str):
