@@ -26,12 +26,12 @@ resource "aws_iam_role" "glue_etl_role" {
 resource "aws_iam_policy" "glue_scripts_access" {
   name        = "GlueScriptsAccessPolicy"
   description = "Policy to allow Glue role access to marcos-test-datalake-glue-scripts bucket"
-  policy      = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "s3:GetObject",
           "s3:ListBucket",
           "s3:PutObject",
@@ -56,12 +56,12 @@ resource "aws_iam_role_policy_attachment" "glue_role_policy_attachment" {
 resource "aws_iam_policy" "glue_etl_access" {
   name        = "GlueETLAccessPolicy"
   description = "Policy to allow Glue role access to Glue Data Catalog and S3 bucket"
-  policy      = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "glue:GetTable",
           "glue:GetTables",
           "iam:PassRole"
@@ -86,12 +86,12 @@ resource "aws_iam_role_policy_attachment" "glue_service_role_policy_attachment" 
 resource "aws_iam_policy" "glue_step_function_access" {
   name        = "GlueStepFunctionAccessPolicy"
   description = "Policy to allow Step Functions to start Glue jobs and manage crawlers"
-  policy      = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "glue:StartJobRun",
           "glue:GetJobRun",
           "glue:GetJobs",
@@ -116,12 +116,12 @@ resource "aws_iam_role_policy_attachment" "glue_step_function_policy_attachment"
 resource "aws_iam_policy" "step_function_execution_access" {
   name        = "StepFunctionExecutionAccessPolicy"
   description = "Policy to allow Glue role to execute Step Functions"
-  policy      = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "states:StartExecution",
           "states:DescribeExecution",
           "states:ListExecutions",

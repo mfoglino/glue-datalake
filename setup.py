@@ -8,8 +8,7 @@ setup(
     description="Utility functions for the project",
     packages=find_packages(),  # Automatically finds all packages in this directory
     install_requires=[],  # Add dependencies if needed
-    package_data={
-    },
+    package_data={},
     include_package_data=True,
     python_requires=">=3.10",
 )

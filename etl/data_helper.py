@@ -2,6 +2,7 @@ from datetime import datetime
 import boto3
 from pyspark.sql.functions import year, month, dayofmonth
 
+
 class DataHelper:
     def __init__(self, glue_context):
         self.S3_SCHEME = "s3"  # "s3a" for local execution

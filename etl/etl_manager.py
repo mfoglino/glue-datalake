@@ -17,7 +17,9 @@ class EtlManager:
         self.data_helper = DataHelper(glue_context)
 
     def process_landing_data(self, table, timestamp_bookmark_str):
-        latest_data_df = self.data_helper.load_data_from_s3(self.landing_bucket_name, self.bucket_prefix, table, timestamp_bookmark_str)
+        latest_data_df = self.data_helper.load_data_from_s3(
+            self.landing_bucket_name, self.bucket_prefix, table, timestamp_bookmark_str
+        )
         latest_data_df = self.data_helper.add_date_information(latest_data_df)
         output_path = f"s3://{self.raw_bucket_name}/{self.bucket_prefix}/{table}/"
         self.logger.info(f"Writing data to {output_path}")
@@ -35,7 +37,7 @@ class EtlManager:
             database="raw",
             table_name="people_table",
             transformation_ctx="raw_people_ctx",
-            additional_options={"useGlueDataCatalog": True, "mergeSchema": True}
+            additional_options={"useGlueDataCatalog": True, "mergeSchema": True},
         ).toDF()
 
         if self.table_exists_in_glue_catalog(target_database, table):
@@ -52,15 +54,12 @@ class EtlManager:
                 self.spark.sql(f"ALTER TABLE {target_database}.{table} ADD COLUMN {col} {col_type}")
 
             self.logger.info(f"Appending data to table {target_database}.{table}")
-            df_raw.writeTo(f"{target_database}.{table}") \
-                .tableProperty("format-version", "2") \
-                .append()
+            df_raw.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").append()
         else:
             self.logger.info(f"Table {table} doesn't exist. Creating new table.")
-            df_raw.writeTo(f"{target_database}.{table}") \
-                .tableProperty("format-version", "2") \
-                .partitionedBy("year", "month", "day") \
-                .create()
+            df_raw.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").partitionedBy(
+                "year", "month", "day"
+            ).create()
 
         df_raw.show(truncate=False)
 

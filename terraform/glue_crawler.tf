@@ -1,6 +1,6 @@
 resource "aws_glue_crawler" "marcos_raw_test_crawler" {
-  name         = "marcos-raw-test-crawler"
-  role         = aws_iam_role.glue_etl_role.name
+  name          = "marcos-raw-test-crawler"
+  role          = aws_iam_role.glue_etl_role.name
   database_name = "raw"
 
   s3_target {
@@ -21,12 +21,12 @@ resource "aws_glue_crawler" "marcos_raw_test_crawler" {
   }
 
   configuration = jsonencode({
-    Version                 = 1.0,
-    Grouping                = {
-      TableGroupingPolicy   = "CombineCompatibleSchemas",
+    Version = 1.0,
+    Grouping = {
+      TableGroupingPolicy     = "CombineCompatibleSchemas",
       TableLevelConfiguration = 3
     },
-    CreatePartitionIndex    = true
+    CreatePartitionIndex = true
   })
 
   lake_formation_configuration {

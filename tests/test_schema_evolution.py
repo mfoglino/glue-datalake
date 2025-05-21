@@ -5,13 +5,14 @@ from pyspark.sql.functions import col
 lading_bucket_name = "marcos-test-datalake-landing"
 table = "people_table"
 
+
 def setup_initial_table(spark):
     """Create and populate the initial table with a basic schema."""
     # Create synthetic data with the initial schema, including a cdc_timestamp
     initial_data = [
         (1, "Alice", 25, datetime(2023, 1, 1, 10, 0, 0)),
         (2, "Bob", 30, datetime(2023, 1, 1, 11, 0, 0)),
-        (3, "Charlie", 35, datetime(2023, 1, 1, 12, 0, 0))
+        (3, "Charlie", 35, datetime(2023, 1, 1, 12, 0, 0)),
     ]
     initial_schema = ["id", "name", "age", "cdc_timestamp"]
 
@@ -25,14 +26,13 @@ def setup_initial_table(spark):
     return df_initial
 
 
-
 def evolve_table_schema(spark):
     """Evolve the table schema by adding a new column."""
     # Create data with an evolved schema (added profession and cdc_timestamp)
     new_data = [
         (4, "David", 40, "Engineer", datetime(2023, 1, 2, 13, 0, 0)),
         (5, "Eve", 28, "Doctor", datetime(2023, 1, 2, 13, 0, 0)),
-        (6, "Frank", 33, "Artist", datetime(2023, 1, 2, 13, 0, 0))
+        (6, "Frank", 33, "Artist", datetime(2023, 1, 2, 13, 0, 0)),
     ]
     new_schema = ["id", "name", "age", "profession", "cdc_timestamp"]
 

@@ -1,7 +1,7 @@
 locals {
-  region      = "us-east-1"
+  region = "us-east-1"
   global_tags = {
-    owner    = "marcos.foglino@caylent.com"
+    owner = "marcos.foglino@caylent.com"
   }
 }
 
@@ -15,7 +15,7 @@ terraform {
 }
 
 provider "aws" {
-  region = local.region
+  region  = local.region
   profile = "caylent-dev-test"
   default_tags {
     tags = local.global_tags

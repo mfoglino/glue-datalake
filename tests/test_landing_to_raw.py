@@ -13,30 +13,55 @@ raw_db = "raw"
 
 def test_step1_landing_to_raw_initial_load(glue_context):
     timestamp_bookmark_str = "INITIAL_LOAD"
-    etl_manager = EtlManager(glue_context, landing_bucket_name=lading_bucket_name, bucket_prefix=landing_bucket_prefix, raw_bucket_name=raw_bucket_name)
+    etl_manager = EtlManager(
+        glue_context,
+        landing_bucket_name=lading_bucket_name,
+        bucket_prefix=landing_bucket_prefix,
+        raw_bucket_name=raw_bucket_name,
+    )
     latest_data_df = etl_manager.process_landing_data(table, timestamp_bookmark_str)
     latest_data_df.show()
+
 
 def test_step2_run_crawler():
     # This test should be run manually to trigger the crawler
     # to create the tables in the raw database
     run_crawler_sync("marcos-raw-test-crawler")
 
+
 def test_step3_raw_to_stage(glue_context):
-    etl_manager = EtlManager(glue_context, landing_bucket_name=lading_bucket_name, bucket_prefix=landing_bucket_prefix, raw_bucket_name=raw_bucket_name)
+    etl_manager = EtlManager(
+        glue_context,
+        landing_bucket_name=lading_bucket_name,
+        bucket_prefix=landing_bucket_prefix,
+        raw_bucket_name=raw_bucket_name,
+    )
     etl_manager.do_raw_to_stage(table)
 
+
 def test_step4_landing_to_raw_incremental_load(glue_context):
-    etl_manager = EtlManager(glue_context, landing_bucket_name=lading_bucket_name, bucket_prefix=landing_bucket_prefix, raw_bucket_name=raw_bucket_name)
+    etl_manager = EtlManager(
+        glue_context,
+        landing_bucket_name=lading_bucket_name,
+        bucket_prefix=landing_bucket_prefix,
+        raw_bucket_name=raw_bucket_name,
+    )
     timestamp_bookmark_str = "2023-01-02 12:03:00.001"
     latest_data_df = etl_manager.process_landing_data(table, timestamp_bookmark_str)
     latest_data_df.show()
 
+
 def test_step5_run_crawler(glue_context):
     run_crawler_sync("marcos-raw-test-crawler")
 
+
 def test_step6_raw_to_stage_new_data(glue_context):
-    etl_manager = EtlManager(glue_context, landing_bucket_name=lading_bucket_name, bucket_prefix=landing_bucket_prefix, raw_bucket_name=raw_bucket_name)
+    etl_manager = EtlManager(
+        glue_context,
+        landing_bucket_name=lading_bucket_name,
+        bucket_prefix=landing_bucket_prefix,
+        raw_bucket_name=raw_bucket_name,
+    )
     etl_manager.do_raw_to_stage(table)
 
 
@@ -56,7 +81,7 @@ def test_describe(glue_context):
     print("Check if 'raw.people_table' exists:", spark.catalog.tableExists("raw.people_table"))
     print("Current catalog in use:", spark.catalog.currentCatalog())
 
-    #print("List of available databases:", spark.catalog.listDatabases())
+    # print("List of available databases:", spark.catalog.listDatabases())
     print("List of tables in the current catalog and schema:", spark.catalog.listTables())
 
 
@@ -65,7 +90,12 @@ def test_clean_tables_and_data(glue_context):
 
 
 def test_schema_evolution_end_to_end(glue_context):
-    etl_manager = EtlManager(glue_context, landing_bucket_name=lading_bucket_name, bucket_prefix=landing_bucket_prefix, raw_bucket_name=raw_bucket_name)
+    etl_manager = EtlManager(
+        glue_context,
+        landing_bucket_name=lading_bucket_name,
+        bucket_prefix=landing_bucket_prefix,
+        raw_bucket_name=raw_bucket_name,
+    )
     spark = glue_context.spark_session
 
     ## STEP 1
@@ -90,4 +120,3 @@ def test_schema_evolution_end_to_end(glue_context):
 
     ### STEP 6
     etl_manager.do_raw_to_stage(table)
-

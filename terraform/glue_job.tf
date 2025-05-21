@@ -1,6 +1,6 @@
 locals {
   enable_time_legacy_parser = false
-  raw_job_name               = "job_landing_to_raw.py"
+  raw_job_name              = "job_landing_to_raw.py"
   stage_job_name            = "job_raw_to_stage.py"
 
   spark_conf = <<EOT
@@ -34,7 +34,7 @@ resource "aws_s3_object" "raw_glue_job_script" {
   bucket = aws_s3_bucket.glue_scripts_bucket.id
   key    = "glue_jobs/${local.raw_job_name}"
   source = "../glue_jobs/${local.raw_job_name}"
-  etag = filemd5("../glue_jobs/${local.raw_job_name}")
+  etag   = filemd5("../glue_jobs/${local.raw_job_name}")
 }
 
 
@@ -42,7 +42,7 @@ resource "aws_s3_object" "stage_glue_job_script" {
   bucket = aws_s3_bucket.glue_scripts_bucket.id
   key    = "glue_jobs/${local.stage_job_name}"
   source = "../glue_jobs/${local.stage_job_name}"
-  etag = filemd5("../glue_jobs/${local.stage_job_name}")
+  etag   = filemd5("../glue_jobs/${local.stage_job_name}")
 }
 
 
@@ -65,7 +65,7 @@ resource "aws_glue_job" "raw_job" {
     "--enable-continuous-cloudwatch-log" = "true"
     "--enable-spark-ui"                  = "true"
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
-    "--timestamp_bookmark_str" = "-"
+    "--timestamp_bookmark_str"           = "-"
   }
 
   glue_version      = "5.0"
@@ -98,8 +98,8 @@ resource "aws_glue_job" "stage_job" {
     "--enable-continuous-cloudwatch-log" = "true"
     "--enable-spark-ui"                  = "true"
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
-    "--conf" = trim(local.spark_conf, "\n")
-    "--timestamp_bookmark_str" = "-"
+    "--conf"                             = trim(local.spark_conf, "\n")
+    "--timestamp_bookmark_str"           = "-"
   }
 
   glue_version      = "5.0"

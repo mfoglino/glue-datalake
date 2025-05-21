@@ -1,6 +1,6 @@
 locals {
   databases = ["raw", "stage"]
-  roles = [aws_iam_role.glue_etl_role.arn,"arn:aws:iam::131578276461:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_370d0a9b30d49146"]
+  roles     = [aws_iam_role.glue_etl_role.arn, "arn:aws:iam::131578276461:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_370d0a9b30d49146"]
   databases_with_roles = flatten([
     for role in local.roles : [
       #for database in concat(var.databases_name, ["default"]) : {
