@@ -33,7 +33,7 @@ landing_bucket_name = "marcos-test-datalake-landing"
 landing_bucket_prefix = "tables"
 raw_bucket_name = "marcos-test-datalake-raw"
 
-etl_manager = EtlManager(glueContext, landing_bucket_name=landing_bucket_name, landing_bucket_prefix=landing_bucket_prefix, raw_bucket_name=raw_bucket_name)
+etl_manager = EtlManager(glueContext, landing_bucket_name=landing_bucket_name, bucket_prefix=landing_bucket_prefix, raw_bucket_name=raw_bucket_name)
 etl_manager.do_raw_to_stage(table)
 
 job.commit()

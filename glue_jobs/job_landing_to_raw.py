@@ -30,10 +30,10 @@ database_name = "raw"
 table = "people_table"
 timestamp_bookmark_str = args["timestamp_bookmark_str"]
 landing_bucket_name = "marcos-test-datalake-landing"
-landing_bucket_prefix = "tables"
 raw_bucket_name = "marcos-test-datalake-raw"
+bucket_prefix = "tables"
 
-etl_manager = EtlManager(glueContext, landing_bucket_name=landing_bucket_name, landing_bucket_prefix=landing_bucket_prefix, raw_bucket_name=raw_bucket_name)
+etl_manager = EtlManager(glueContext, landing_bucket_name=landing_bucket_name, bucket_prefix=bucket_prefix, raw_bucket_name=raw_bucket_name)
 latest_data_df = etl_manager.process_landing_data(table, timestamp_bookmark_str)
 latest_data_df.show()
 

@@ -6,19 +6,20 @@ from etl.data_helper import DataHelper
 
 
 class EtlManager:
-    def __init__(self, glue_context, landing_bucket_name, landing_bucket_prefix, raw_bucket_name):
+    def __init__(self, glue_context, landing_bucket_name, bucket_prefix, raw_bucket_name):
         self.glue_client = boto3.client("glue", region_name="us-east-1")
         self.spark = glue_context.spark_session
         self.logger = glue_context.get_logger()
         self.landing_bucket_name = landing_bucket_name
-        self.landing_bucket_prefix = landing_bucket_prefix
+        self.bucket_prefix = bucket_prefix
         self.raw_bucket_name = raw_bucket_name
         self.data_helper = DataHelper(glue_context)
 
     def process_landing_data(self, table, timestamp_bookmark_str):
-        latest_data_df = self.data_helper.load_data_from_s3(self.landing_bucket_name, self.landing_bucket_prefix, table, timestamp_bookmark_str)
+        latest_data_df = self.data_helper.load_data_from_s3(self.landing_bucket_name, self.bucket_prefix, table, timestamp_bookmark_str)
         latest_data_df = self.data_helper.add_date_information(latest_data_df)
-        output_path = f"s3://{self.landing_bucket_name}/{self.landing_bucket_prefix}/{table}/"
+        output_path = f"s3://{self.raw_bucket_name}/{self.bucket_prefix}/{table}/"
+        self.logger.info(f"Writing data to {output_path}")
         latest_data_df.write.mode("append").partitionBy("year", "month", "day").parquet(output_path)
         return latest_data_df
 
