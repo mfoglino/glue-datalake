@@ -47,7 +47,7 @@ def do_raw_to_stage(glue_context, spark, table, logger):
         # Find missing columns
         missing_columns = set(data_columns) - set(stage_table_columns + ["year", "month", "day"])
 
-        print(f"Missing columns: {missing_columns}")
+        logger.info(f"Missing columns: {missing_columns}")
 
         # Add missing columns to the table
 

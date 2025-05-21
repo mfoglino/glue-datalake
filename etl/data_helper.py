@@ -18,6 +18,7 @@ def load_data_from_s3(bucket_name, prefix, table, timestamp_bookmark_str, spark,
         path_to_initial_data = f"{S3_SCHEME}://{bucket_name}/{prefix}/{table}/LOAD*.parquet"
 
         # initial_df = spark.read.option("recursiveFileLookup", "true").parquet(path_to_initial_data)
+        logger.info(f"Reading data from: {path_to_initial_data}")
         initial_df = spark.read.parquet(path_to_initial_data)
         return initial_df
     else:
