@@ -6,7 +6,7 @@ from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark import SparkContext
 
-from etl.etl import process_landing_data
+from etl.etl_manager import EtlManager
 
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(
@@ -33,23 +33,8 @@ landing_bucket_name = "marcos-test-datalake-landing"
 landing_bucket_prefix = "tables"
 raw_bucket_name = "marcos-test-datalake-raw"
 
-# logger.info(f"Showing metadata...")
-# spark.sql("SHOW TABLES IN raw").show()
-# spark.sql("SELECT current_catalog()").show()
-# spark.sql("SELECT current_schema()").show()
-# spark.sql("USE SCHEMA raw")
-# logger.info(f"Spark catalog imp {spark.conf.get('spark.sql.catalogImplementation')}")
-#
-# spark.sql(f"DESCRIBE stage.{table_name}").show()
-#table_schema = spark.table(f"raw.{table}").schema
-#print(table_schema)
-
-#timestamp_bookmark_str = "INITIAL_LOAD"
-
-
-latest_data_df = process_landing_data(landing_bucket_name, landing_bucket_prefix, logger, raw_bucket_name, spark,
-                                      table, timestamp_bookmark_str)
-
+etl_manager = EtlManager(glueContext, landing_bucket_name=landing_bucket_name, landing_bucket_prefix=landing_bucket_prefix, raw_bucket_name=raw_bucket_name)
+latest_data_df = etl_manager.process_landing_data(table, timestamp_bookmark_str)
 latest_data_df.show()
 
 

@@ -2,7 +2,7 @@ import time
 
 import boto3
 
-from etl.data_helper import load_data_from_s3, add_date_information
+from etl.data_helper import DataHelper
 
 
 class EtlManager:
@@ -13,10 +13,11 @@ class EtlManager:
         self.landing_bucket_name = landing_bucket_name
         self.landing_bucket_prefix = landing_bucket_prefix
         self.raw_bucket_name = raw_bucket_name
+        self.data_helper = DataHelper(glue_context)
 
     def process_landing_data(self, table, timestamp_bookmark_str):
-        latest_data_df = load_data_from_s3(self.landing_bucket_name, self.landing_bucket_prefix, table, timestamp_bookmark_str, self.spark, self.logger)
-        latest_data_df = add_date_information(latest_data_df)
+        latest_data_df = self.data_helper.load_data_from_s3(self.landing_bucket_name, self.landing_bucket_prefix, table, timestamp_bookmark_str)
+        latest_data_df = self.data_helper.add_date_information(latest_data_df)
         output_path = f"s3://{self.landing_bucket_name}/{self.landing_bucket_prefix}/{table}/"
         latest_data_df.write.mode("append").partitionBy("year", "month", "day").parquet(output_path)
         return latest_data_df
