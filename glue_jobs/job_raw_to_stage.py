@@ -6,7 +6,7 @@ from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark import SparkContext
 
-from etl.etl import process_landing_data, do_raw_to_stage
+from etl.etl_manager import EtlManager
 
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(
@@ -33,7 +33,7 @@ landing_bucket_name = "marcos-test-datalake-landing"
 landing_bucket_prefix = "tables"
 raw_bucket_name = "marcos-test-datalake-raw"
 
-do_raw_to_stage(glueContext, spark, table, glueContext.get_logger())
-
+etl_manager = EtlManager(glueContext, landing_bucket_name=landing_bucket_name, landing_bucket_prefix=landing_bucket_prefix, raw_bucket_name=raw_bucket_name)
+etl_manager.do_raw_to_stage(table)
 
 job.commit()
