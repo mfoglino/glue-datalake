@@ -65,7 +65,7 @@ class EtlManager:
 
     def get_columns_metadata(self, database_name, table_name):
         response = self.glue_client.get_table(DatabaseName=database_name, Name=table_name)
-        self.logger.info(f"Columns metadata for {database_name}.{table_name}:", response)
+        self.logger.info(f"Columns metadata for {database_name}.{table_name}: {response}")
         columns = response["Table"]["StorageDescriptor"]["Columns"]
         return columns
 
