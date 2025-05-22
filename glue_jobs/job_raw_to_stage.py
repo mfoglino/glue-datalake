@@ -13,7 +13,6 @@ args = getResolvedOptions(
     sys.argv,
     [
         "JOB_NAME",
-        "timestamp_bookmark_str",
     ],
 )
 
@@ -28,7 +27,6 @@ logger = glueContext.get_logger()
 
 database_name = "raw"
 table = "people_table"
-timestamp_bookmark_str = args["timestamp_bookmark_str"]
 landing_bucket_name = "marcos-test-datalake-landing"
 landing_bucket_prefix = "tables"
 raw_bucket_name = "marcos-test-datalake-raw"

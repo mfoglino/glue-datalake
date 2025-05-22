@@ -32,11 +32,12 @@ class EtlManager:
         self.spark.sql("SELECT current_catalog()").show()
         self.spark.sql("SELECT current_schema()").show()
 
+        source_database = "raw"
         target_database = "stage"
-
+        self.logger.info(f"Processing table {source_database}.{table}")
         df_raw = self.glue_context.create_dynamic_frame.from_catalog(
-            database="raw",
-            table_name="people_table",
+            database=source_database,
+            table_name=table,
             transformation_ctx="raw_people_ctx",
             additional_options={"useGlueDataCatalog": True, "mergeSchema": True},
         ).toDF()
@@ -73,7 +74,7 @@ class EtlManager:
             raise Exception(f"Type changes detected (manual intervention needed): {to_type_change}")
 
         if to_add:
-            self.logger.info(f"Missing columns: {to_add}")
+            self.logger.info(f"Adding new columns: {to_add}")
             for col in to_add:
                 col_type = df_raw.schema[col].dataType.simpleString()
                 self.logger.info(f"Adding column {col} with type {col_type} to table {target_database}.{table}")
