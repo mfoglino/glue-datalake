@@ -1,6 +1,7 @@
 import time
 
 import boto3
+from pyspark.sql.functions import current_schema
 
 from etl.data_helper import DataHelper
 
@@ -42,17 +43,7 @@ class EtlManager:
 
         if self.table_exists_in_glue_catalog(target_database, table):
             self.logger.info(f"Table {table} exists. Checking for schema differences.")
-            stage_columns_metadata = self.get_columns_metadata(target_database, table)
-            stage_table_columns = [column["Name"] for column in stage_columns_metadata]
-            data_columns = df_raw.columns
-            missing_columns = set(data_columns) - set(stage_table_columns + ["year", "month", "day"])
-            self.logger.info(f"Missing columns: {missing_columns}")
-
-            for col in missing_columns:
-                col_type = df_raw.schema[col].dataType.simpleString()
-                self.logger.info(f"Adding column {col} with type {col_type} to table {target_database}.{table}")
-                self.spark.sql(f"ALTER TABLE {target_database}.{table} ADD COLUMN {col} {col_type}")
-
+            self.evolve_table_schema_iceberg(df_raw, table, target_database)
             self.logger.info(f"Appending data to table {target_database}.{table}")
             df_raw.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").append()
         else:
@@ -62,6 +53,32 @@ class EtlManager:
             ).create()
 
         df_raw.show(truncate=False)
+
+    def evolve_table_schema_iceberg(self, df_raw, table, target_database):
+        current_metadata = self.get_columns_metadata(target_database, table)
+        current_columns = [column["Name"] for column in current_metadata] + ["year", "month", "day"]
+        new_columns = df_raw.columns # new_columns contains partitions columns: year, month, day
+
+        to_add = set(new_columns) - set(current_columns)
+        to_drop = [col for col in current_columns if col not in new_columns]
+        to_type_change = {
+            col: (current_columns[col], new_columns[col])
+            for col in new_columns
+            if col in current_columns and current_columns[col] != new_columns[col]
+        }
+
+        if to_drop:
+            raise Exception(f"Cannot drop columns automatically: {to_drop}")
+        if to_type_change:
+            raise Exception(f"Type changes detected (manual intervention needed): {to_type_change}")
+
+        if to_add:
+            self.logger.info(f"Missing columns: {to_add}")
+            for col in to_add:
+                col_type = df_raw.schema[col].dataType.simpleString()
+                self.logger.info(f"Adding column {col} with type {col_type} to table {target_database}.{table}")
+                self.spark.sql(f"ALTER TABLE {target_database}.{table} ADD COLUMN {col} {col_type}")
+
 
     def get_columns_metadata(self, database_name, table_name):
         response = self.glue_client.get_table(DatabaseName=database_name, Name=table_name)
