@@ -57,14 +57,14 @@ class EtlManager:
 
     def evolve_table_schema_iceberg(self, df_raw, table, target_database):
         current_metadata = self.get_columns_metadata(target_database, table)
-        current_columns = [column["Name"] for column in current_metadata] + ["year", "month", "day"]
-        new_columns = df_raw.columns # new_columns contains partitions columns: year, month, day
+        current_columns = {column["Name"]: column["Type"] for column in current_metadata}  # Convert to a dictionary
+        new_columns = {col: df_raw.schema[col].dataType.simpleString() for col in df_raw.columns}  # New columns with types
 
-        to_add = set(new_columns) - set(current_columns)
-        to_drop = [col for col in current_columns if col not in new_columns]
+        to_add = set(new_columns.keys()) - set(current_columns.keys())
+        to_drop = [col for col in current_columns.keys() if col not in new_columns.keys()]
         to_type_change = {
             col: (current_columns[col], new_columns[col])
-            for col in new_columns
+            for col in new_columns.keys()
             if col in current_columns and current_columns[col] != new_columns[col]
         }
 
@@ -76,15 +76,15 @@ class EtlManager:
         if to_add:
             self.logger.info(f"Adding new columns: {to_add}")
             for col in to_add:
-                col_type = df_raw.schema[col].dataType.simpleString()
+                col_type = new_columns[col]
                 self.logger.info(f"Adding column {col} with type {col_type} to table {target_database}.{table}")
                 self.spark.sql(f"ALTER TABLE {target_database}.{table} ADD COLUMN {col} {col_type}")
 
-
     def get_columns_metadata(self, database_name, table_name):
         response = self.glue_client.get_table(DatabaseName=database_name, Name=table_name)
-        self.logger.info(f"Columns metadata for {database_name}.{table_name}: {response}")
+        #self.logger.info(f"Columns metadata for {database_name}.{table_name}: {response}")
         columns = response["Table"]["StorageDescriptor"]["Columns"]
+        self.logger.info(f"Columns metadata for {database_name}.{table_name}: {columns}")
         return columns
 
     def table_exists_in_glue_catalog(self, database_name, table_name):

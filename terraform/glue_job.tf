@@ -99,7 +99,6 @@ resource "aws_glue_job" "stage_job" {
     "--enable-spark-ui"                  = "true"
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
     "--conf"                             = trim(local.spark_conf, "\n")
-    "--timestamp_bookmark_str"           = "-"
   }
 
   glue_version      = "5.0"
