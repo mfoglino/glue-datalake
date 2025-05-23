@@ -14,8 +14,8 @@ def delete_tables_and_clean_data(glue_context, raw_bucket_name):
             spark.sql(f"DROP TABLE {database}.{table_name}")
 
     # Clean raw bucket
-    print(f"Cleaning bucket: {raw_bucket_name}")
-    clean_s3_bucket(s3_client, raw_bucket_name)
+    #print(f"Cleaning bucket: {raw_bucket_name}")
+    #clean_s3_bucket(s3_client, raw_bucket_name)
 
 
 def clean_s3_bucket(s3_client, bucket_name):

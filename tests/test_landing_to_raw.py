@@ -1,4 +1,4 @@
-from etl.etl import process_landing_data, do_raw_to_stage, run_crawler_sync
+import subprocess
 
 from etl.bookmark_manager import BookmarkManager
 from etl.etl_manager import EtlManager
@@ -78,7 +78,7 @@ def test_schema_evolution_end_to_end(glue_context):
     latest_data_df.show()
 
     ### STEP 2
-    run_crawler_sync("marcos-raw-test-crawler")
+    etl_manager.run_crawler_sync("marcos-raw-test-crawler")
 
     ### STEP 3
     etl_manager.do_raw_to_stage(table)
@@ -89,7 +89,7 @@ def test_schema_evolution_end_to_end(glue_context):
     latest_data_df.show()
 
     ### STEP 5
-    run_crawler_sync("marcos-raw-test-crawler")
+    etl_manager.run_crawler_sync("marcos-raw-test-crawler")
 
     ### STEP 6
     etl_manager.do_raw_to_stage(table)
@@ -135,7 +135,7 @@ def test_schema_evolution_end_to_end(glue_context):
     latest_data_df.show()
 
     ### STEP 2
-    run_crawler_sync("marcos-raw-test-crawler")
+    etl_manager.run_crawler_sync("marcos-raw-test-crawler")
 
     ### STEP 3
     etl_manager.do_raw_to_stage(table)
@@ -146,7 +146,21 @@ def test_schema_evolution_end_to_end(glue_context):
     latest_data_df.show()
 
     ### STEP 5
-    run_crawler_sync("marcos-raw-test-crawler")
+    etl_manager.run_crawler_sync("marcos-raw-test-crawler")
 
     ### STEP 6
     etl_manager.do_raw_to_stage(table)
+
+def execute_aws_cli_command(command):
+    try:
+        # Run the AWS CLI command
+        result = subprocess.run(command, shell=True, check=True, text=True, capture_output=True)
+        print("Command Output:", result.stdout)
+    except subprocess.CalledProcessError as e:
+        print("Error executing command:", e.stderr)
+
+
+def test_clean_everything():
+    execute_aws_cli_command("aws glue delete-table --database-name raw --name people_table")
+    execute_aws_cli_command("aws glue delete-table --database-name stage --name people_table")
+    execute_aws_cli_command("aws s3 rm s3://marcos-test-datalake-raw --recursive")
