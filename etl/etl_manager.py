@@ -19,7 +19,7 @@ class EtlManager:
 
     def process_landing_data(self, table, timestamp_bookmark_str):
 
-        timestamp_bookmark_str = self.bookmark_manager.read_bookmark(
+        timestamp_bookmark_str = self.bookmark_manager.read_bookmark_with_fallback(
             timestamp_bookmark_str, table
         )
 
