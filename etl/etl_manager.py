@@ -1,13 +1,13 @@
 import time
-
 import boto3
-from pyspark.sql.functions import current_schema
 
+from etl.bookmark_manager import BookmarkManager
 from etl.data_helper import DataHelper
 
 
 class EtlManager:
-    def __init__(self, glue_context, landing_bucket_name, bucket_prefix, raw_bucket_name):
+    def __init__(self, bookmark_manager, glue_context, landing_bucket_name, bucket_prefix, raw_bucket_name):
+        self.bookmark_manager: BookmarkManager = bookmark_manager
         self.glue_client = boto3.client("glue", region_name="us-east-1")
         self.glue_context = glue_context
         self.spark = glue_context.spark_session
@@ -18,6 +18,11 @@ class EtlManager:
         self.data_helper = DataHelper(glue_context)
 
     def process_landing_data(self, table, timestamp_bookmark_str):
+
+        timestamp_bookmark_str = self.bookmark_manager.read_bookmark(
+            timestamp_bookmark_str, table
+        )
+
         latest_data_df = self.data_helper.load_data_from_s3(
             self.landing_bucket_name, self.bucket_prefix, table, timestamp_bookmark_str
         )
@@ -25,6 +30,14 @@ class EtlManager:
         output_path = f"s3://{self.raw_bucket_name}/{self.bucket_prefix}/{table}/"
         self.logger.info(f"Writing data to {output_path}")
         latest_data_df.write.mode("append").partitionBy("year", "month", "day").parquet(output_path)
+
+        last_processed_timestamp = latest_data_df.selectExpr("max(timestamp)").collect()[0][0]
+        if last_processed_timestamp is None:
+            self.logger.warn(f"No new data to process (empty dataframe). Last processed timestamp remains as: {timestamp_bookmark_str}")
+        else:
+            self.logger.info(f"Last processed timestamp: {last_processed_timestamp}")
+            self.bookmark_manager.write_bookmark(table, last_processed_timestamp)
+
         return latest_data_df
 
     def do_raw_to_stage(self, table):
