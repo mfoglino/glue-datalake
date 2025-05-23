@@ -37,7 +37,7 @@ class EtlManager:
             self.logger.warn(f"No new data to process (empty dataframe). Last processed timestamp remains as: {timestamp_bookmark_str}")
         else:
             self.logger.info(f"Last processed timestamp: {last_processed_timestamp}")
-            self.bookmark_manager.write_bookmark(table, last_processed_timestamp)
+            self.bookmark_manager.write_bookmark(table, last_processed_timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
 
         return latest_data_df
 

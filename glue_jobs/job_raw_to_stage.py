@@ -32,6 +32,7 @@ landing_bucket_prefix = "tables"
 raw_bucket_name = "marcos-test-datalake-raw"
 
 etl_manager = EtlManager(
+    None,
     glueContext,
     landing_bucket_name=landing_bucket_name,
     bucket_prefix=landing_bucket_prefix,
