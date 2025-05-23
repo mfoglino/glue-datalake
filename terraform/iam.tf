@@ -64,7 +64,8 @@ resource "aws_iam_policy" "glue_etl_access" {
         Action = [
           "glue:GetTable",
           "glue:GetTables",
-          "iam:PassRole"
+          "iam:PassRole",
+          "dynamodb:*"
         ]
         Resource = "*"
       }

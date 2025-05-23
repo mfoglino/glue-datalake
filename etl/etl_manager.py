@@ -4,6 +4,7 @@ import boto3
 from etl.bookmark_manager import BookmarkManager
 from etl.data_helper import DataHelper
 
+TIMESTAMP_COLUMN = "cdc_timestamp"  # Replace with your actual timestamp column name
 
 class EtlManager:
     def __init__(self, bookmark_manager, glue_context, landing_bucket_name, bucket_prefix, raw_bucket_name):
@@ -31,7 +32,7 @@ class EtlManager:
         self.logger.info(f"Writing data to {output_path}")
         latest_data_df.write.mode("append").partitionBy("year", "month", "day").parquet(output_path)
 
-        last_processed_timestamp = latest_data_df.selectExpr("max(timestamp)").collect()[0][0]
+        last_processed_timestamp = latest_data_df.selectExpr(f"max({TIMESTAMP_COLUMN})").collect()[0][0]
         if last_processed_timestamp is None:
             self.logger.warn(f"No new data to process (empty dataframe). Last processed timestamp remains as: {timestamp_bookmark_str}")
         else:
