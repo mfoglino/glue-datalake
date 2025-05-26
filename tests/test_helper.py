@@ -25,3 +25,47 @@ def clean_s3_bucket(s3_client, bucket_name):
         if "Contents" in page:
             objects = [{"Key": obj["Key"]} for obj in page["Contents"]]
             s3_client.delete_objects(Bucket=bucket_name, Delete={"Objects": objects})
+
+
+
+
+
+def write_single_parquet_file(df, output_path, logger):
+    # Write the DataFrame to a temporary folder
+    temp_output_path = output_path + "_temp"
+    df.coalesce(1).write.format("parquet").mode("overwrite").save(temp_output_path)
+
+    # Parse S3 bucket and prefix
+    s3 = boto3.client("s3")
+    bucket_name = output_path.split("/")[2]
+    prefix = "/".join(output_path.split("/")[3:-1])
+    temp_prefix = "/".join(output_path.split("/")[3:]) + "_temp/"
+
+    desired_file_name = output_path.split("/")[-1]
+
+    # List the files in the temporary folder
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=temp_prefix)
+    parquet_file_key = None
+
+    for obj in response.get("Contents", []):
+        if obj["Key"].endswith(".parquet"):
+            parquet_file_key = obj["Key"]
+            break
+
+    if parquet_file_key:
+        # Copy the file to the desired location with the correct name
+        copy_source = {"Bucket": bucket_name, "Key": parquet_file_key}
+        logger.info(f"Copying {copy_source} to {prefix}/{desired_file_name}")
+        s3.copy_object(
+            CopySource=copy_source,
+            Bucket=bucket_name,
+            Key=f"{prefix}/{desired_file_name}",
+        )
+
+        # Delete the temporary file
+        s3.delete_object(Bucket=bucket_name, Key=parquet_file_key)
+
+    # Delete the temporary folder
+    if response.get("Contents"):
+        for obj in response["Contents"]:
+            s3.delete_object(Bucket=bucket_name, Key=obj["Key"])

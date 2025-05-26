@@ -1,12 +1,12 @@
 import subprocess
 
 from etl.bookmark_manager import BookmarkManager
+from etl.config import raw_bucket_name
 from etl.etl_manager import EtlManager
 
 from tests.test_helper import delete_tables_and_clean_data
 
 lading_bucket_name = "marcos-test-datalake-landing"
-raw_bucket_name = "marcos-test-datalake-raw"
 landing_bucket_prefix = "tables"
 table = "people_table"
 stage_db = "stage"

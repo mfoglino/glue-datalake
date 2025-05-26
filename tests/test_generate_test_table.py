@@ -1,8 +1,8 @@
 from datetime import datetime
-from pyspark.sql.functions import col
 
+from etl.config import lading_bucket_name
+from tests.test_helper import write_single_parquet_file
 
-lading_bucket_name = "marcos-test-datalake-landing"
 table = "people_table"
 
 
@@ -49,10 +49,8 @@ def test_generate_initial_schema(glue_context):
     print(f"Spark version: {spark.version}")
     initial_df = setup_initial_table(spark)
 
-    output_path = f"s3://{lading_bucket_name}/tables/{table}/LOAD00000001.parquet"
-    initial_df.coalesce(1).write.mode("overwrite").parquet(output_path)
-
-    # rename later manually to a single file named LOAD00000001.parquet
+    final_output_path = f"s3://{lading_bucket_name}/tables/{table}/LOAD00000001.parquet"
+    write_single_parquet_file(initial_df, final_output_path,  glue_context.get_logger())
 
 
 def test_evolve_schema(glue_context):

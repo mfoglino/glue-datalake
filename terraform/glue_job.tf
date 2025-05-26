@@ -15,19 +15,6 @@ locals {
 ${local.enable_time_legacy_parser ? " --conf spark.sql.legacy.timeParserPolicy=LEGACY" : ""}
 EOT
 
-  spark_conf_2 = <<EOT
- conf spark.sql.catalog.glue_catalog=org.apache.iceberg.spark.SparkCatalog
- --conf spark.sql.catalog.glue_catalog.warehouse=s3://${aws_s3_bucket.raw_bucket.id}/warehouse
- --conf spark.sql.catalog.glue_catalog.catalog-impl=org.apache.iceberg.aws.glue.GlueCatalog
- --conf spark.sql.catalog.glue_catalog.io-impl=org.apache.iceberg.aws.s3.S3FileIO
- --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
- --conf spark.sql.defaultCatalog=glue_catalog
- --conf spark.hadoop.fs.s3a.endpoint=s3.us-east-1.amazonaws.com
- --conf spark.sql.iceberg.write-allow-schema-evolution=true
- --conf spark.sql.catalog.glue_catalog.default-namespace=raw
- --conf spark.sql.iceberg.handle-timestamp-without-timezone=true
- --conf spark.sql.parquet.mergeSchema=true
-EOT
 }
 
 resource "aws_s3_object" "raw_glue_job_script" {
@@ -66,6 +53,10 @@ resource "aws_glue_job" "raw_job" {
     "--enable-spark-ui"                  = "true"
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
     "--timestamp_bookmark_str"           = "-"
+    "--landing_bucket_name"              = aws_s3_bucket.landing_bucket.id
+    "--raw_bucket_name"                  = aws_s3_bucket.raw_bucket.id
+    "--bucket_prefix"                    = "tables"
+    "--bookmark_table"                   = aws_dynamodb_table.raw_to_stage_dynamodb_table.name
   }
 
   glue_version      = "5.0"
