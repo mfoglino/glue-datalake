@@ -48,7 +48,10 @@ export PYTHONPATH=$PYTHONPATH:/home/hadoop/workspace
 
 Examples:
 ```
-python3 glue_scripts/job_raw_to_stage.py  --table core_program --timestamp_bookmark_str '2025-01-01 00:00:00.000' --raw_bucket_name marcos-test-datalake-raw --raw_bucket_prefix tables --bookmark_table raw_to_stage_bookmarks  --JOB_NAME rawtest 
+pytest -s tests/test_landing_to_raw.py::test_clean_solution
+
+python3 glue_scripts/job_raw_to_stage.py  --table core_program --timestamp_bookmark_str '2025-01-01 00:00:00.000' --raw_bucket_name marcos-test-datalake-raw --raw_bucket_prefix tables --bookmark_table landing_to_raw_bookmark  --JOB_NAME rawtest 
+
 pytest -s tests/test_landing_to_raw.py
  ```
 
@@ -65,3 +68,7 @@ In Preferences: Open Workspace Settings (JSON), and put this json:
 }
 
 
+### Notes
+- Glue bookmarks are not supported in the Glue Docker (public.ecr.aws/glue/aws-glue-libs:5)
+- Lake Formation working properly is very important. Otherwise you can get unuseful errors. Like table for example 'stage.people_table not found.', 
+when the real error is related to LakeFormation permissions.
