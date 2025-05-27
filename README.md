@@ -55,6 +55,11 @@ python3 glue_scripts/job_raw_to_stage.py  --table core_program --timestamp_bookm
 pytest -s tests/test_landing_to_raw.py
  ```
 
+### Building Python Artifact
+```
+python setup.py bdist_wheel --dist-dir /tmp/iceberg_test;  rm -rf build; aws s3 cp /tmp/iceberg_test/python_libs-0.1.0-py3-none-any.whl  s3://marcos-test-datalake-glue-scripts/artifacts/
+```
+
 
 ### (Optional) Attach Docker to Visual Code:
 
