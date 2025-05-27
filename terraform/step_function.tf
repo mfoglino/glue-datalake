@@ -8,37 +8,60 @@ resource "aws_sfn_state_machine" "sf_datalake_orchestration" {
   role_arn = aws_iam_role.glue_etl_role.arn
 
   definition = jsonencode({
-    "Comment" : "A description of my state machine",
-    "StartAt" : "Glue Landing to Raw",
-    "States" : {
-      "Glue Landing to Raw" : {
-        "Type" : "Task",
-        "Resource" : "arn:aws:states:::glue:startJobRun.sync",
-        "Parameters" : {
-          "JobName" : "marcos-landing-to-raw",
-          "Arguments" : {
-            "--timestamp_bookmark_str.$" : "$.timestamp_bookmark_str"
+    "Comment": "A description of my state machine",
+    "StartAt": "Glue Landing to Raw",
+    "States": {
+      "Glue Landing to Raw": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::glue:startJobRun.sync",
+        "Parameters": {
+          "JobName": "marcos-landing-to-raw",
+          "Arguments": {
+            "--timestamp_bookmark_str.$": "$.timestamp_bookmark_str"
           }
         },
-        "Next" : "StartCrawler"
+        "Next": "StartCrawler"
       },
-      "StartCrawler" : {
-        "Type" : "Task",
-        "Parameters" : {
-          "Name" : "marcos-raw-test-crawler"
+      "StartCrawler": {
+        "Type": "Task",
+        "Parameters": {
+          "Name": "marcos-raw-test-crawler"
         },
-        "Resource" : "arn:aws:states:::aws-sdk:glue:startCrawler",
-        "Next" : "Glue Raw to Stage"
+        "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+        "Next": "CheckCrawlerStatus"
       },
-      "Glue Raw to Stage" : {
-        "Type" : "Task",
-        "Resource" : "arn:aws:states:::glue:startJobRun.sync",
-        "Parameters" : {
-          "JobName" : "marcos-raw-to-stage",
-          "Arguments" : {
+      "CheckCrawlerStatus": {
+        "Type": "Wait",
+        "Seconds": 10,
+        "Next": "GetCrawlerStatus"
+      },
+      "GetCrawlerStatus": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::aws-sdk:glue:getCrawler",
+        "Parameters": {
+          "Name": "marcos-raw-test-crawler"
+        },
+        "Next": "EvaluateCrawlerStatus"
+      },
+      "EvaluateCrawlerStatus": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.Crawler.State",
+            "StringEquals": "READY",
+            "Next": "Glue Raw to Stage"
           }
+        ],
+        "Default": "CheckCrawlerStatus"
+      },
+      "Glue Raw to Stage": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::glue:startJobRun.sync",
+        "Parameters": {
+          "JobName": "marcos-raw-to-stage",
+          "Arguments": {}
         },
-        "End" : true
+        "End": true
       }
     }
   })

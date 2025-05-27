@@ -160,7 +160,8 @@ def execute_aws_cli_command(command):
         print("Error executing command:", e.stderr)
 
 
-def test_clean_everything():
+def test_clean_solution():
     execute_aws_cli_command("aws glue delete-table --database-name raw --name people_table")
     execute_aws_cli_command("aws glue delete-table --database-name stage --name people_table")
     execute_aws_cli_command("aws s3 rm s3://marcos-test-datalake-raw --recursive")
+    execute_aws_cli_command("""aws dynamodb scan --table-name landing_to_raw_bookmark --query "Items[*].table_name.S" --output text | xargs -I {} aws dynamodb delete-item --table-name landing_to_raw_bookmark --key \"{\\"table_name\\": {\\"S\\": \\"{}\\"}}\"""")
