@@ -11,7 +11,7 @@ To generate the necessary AWS resources, run the following command in your termi
 
 Inside the Docker Terminal:
 
-```#:> WORKSPACE_LOCATION=/Users/marcos.foglino/workspace/learning/glue-datalake``` 
+```#:> WORKSPACE_LOCATION=/Users/marcos.foglino/workspace/learning/glue-datalake-example-iceberg``` 
 ```#:> pytest -s tests/test_generate_test_table.py::test_generate_initial_schema```
 ```#:> pytest -s tests/test_generate_test_table.py::test_evolve_schema```
 
@@ -35,7 +35,7 @@ To run the code and tests in a Docker container, follow these steps:
 1. Run the Docker for Glue: In your local machine, go to Bash / ZSH terminal, run the following command to start the Docker container:
 
 ```
-#> WORKSPACE_LOCATION=/Users/marcos.foglino/workspace/learning/glue-datalake
+#> WORKSPACE_LOCATION=/Users/marcos.foglino/workspace/learning/glue-datalake-datalake-example
 #> docker run -it --rm  -v ~/.aws:/home/hadoop/.aws -v $WORKSPACE_LOCATION:/home/hadoop/workspace/ -e AWS_PROFILE=caylent-dev-test -e ENVIRONMENT=dev -e AWS_REGION=us-east-1 -e AWS_DEFAULT_REGION=us-east-1 -p 4040:4040 -p 18080:18080  --name glue5_pyspark public.ecr.aws/glue/aws-glue-libs:5 pyspark
 ```
 
